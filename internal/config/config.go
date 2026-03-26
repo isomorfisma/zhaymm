@@ -1,11 +1,11 @@
 package config
 
-// Config adalah representasi utama dari isi schema.yaml
+// Config is the main representation from schema.yaml contents
 type Config struct {
 	Tables []Table `yaml:"tables"`
 }
 
-// Table mewakili konfigurasi untuk satu tabel spesifik
+// Table represent configuration for 1 specific table
 type Table struct {
 	Name    string            `yaml:"name"`
 	Count   int               `yaml:"count"`

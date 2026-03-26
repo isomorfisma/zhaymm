@@ -7,24 +7,24 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// LoadConfig membaca file YAML dari hardisk dan mengembalikannya sebagai pointer ke Config
+// LoadConfig reads YAML file and returns it as a pointer to Config
 func LoadConfig(filename string) (*Config, error) {
-	// 1. Baca isi file (I/O Operation)
+	// I/O Operation
 	data, err := os.ReadFile(filename)
 	if err != nil {
-		// Menggunakan %w untuk membungkus (wrap) error asli agar mudah di-debug nanti
-		return nil, fmt.Errorf("gagal membaca file %s: %w", filename, err)
+		// %w for error wrapping
+		return nil, fmt.Errorf("Failure to read file %s: %w", filename, err)
 	}	
 
-	// 2. Siapkan 'wadah' kosong berupa Struct Config
+	// Empty Config struct
 	var cfg Config
 
-	// 3. Terjemahkan (Unmarshal) teks YAML ke dalam memori wadah cfg
+	// Translate YAML to cfg
 	err = yaml.Unmarshal(data, &cfg)
 	if err != nil {
-		return nil, fmt.Errorf("format YAML tidak valid: %w", err)
+		return nil, fmt.Errorf("Invalid YAML file: %w", err)
 	}
 
-	// 4. Kembalikan alamat memori (pointer) dari config yang sudah terisi
+	// Returns pointer from the filled config
 	return &cfg, nil
 }
