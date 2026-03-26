@@ -11,3 +11,4 @@ type Table struct {
 	Count   int               `yaml:"count"`
 	Columns map[string]string `yaml:"columns"`
 }
+

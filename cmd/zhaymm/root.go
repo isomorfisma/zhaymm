@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// rootCmd is the base command when user inputs no sub-command
+// rootCmd is the base command
 var rootCmd = &cobra.Command{
 	Use:   "zhaymm",
 	Short: "zhaymm is a blazing-fast database seeder",
