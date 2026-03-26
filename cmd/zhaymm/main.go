@@ -6,9 +6,8 @@ import (
 )
 
 func main() {
-	/* Memanggil fungsi Execute() yang ada di root.go
-	Kalo err berisi error (bukan nil), akan dikasih liat error dan langsung keluar dari appnya. */
-	
+	/* Calls Execute() func from root.go
+	Exits on error */
 	if err := Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

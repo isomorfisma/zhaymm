@@ -1,0 +1,8 @@
+tables:
+  - name: users
+    count: 100
+    columns:
+      id: "uuid"
+      name: "person_name"
+      email: "email"
+  
