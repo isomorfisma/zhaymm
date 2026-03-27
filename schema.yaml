@@ -1,14 +1,14 @@
 tables:
   - name: orders
     count: 50
-    depends_on: ["users"] 
+    depends_on: ["users"]
     columns:
-      id: "uuid"
-      user_id: "uuid" 
-      total: "random_int"
+      id: "uuid()"
+      user_id: "uuid()" 
+      total: "random_int(10000, 500000)" # Menghasilkan angka acak antara 10rb - 500rb
   - name: users
     count: 100
-    depends_on: [] 
+    depends_on: []
     columns:
-      id: "uuid"
-      name: "person_name"
+      id: "uuid()"
+      name: "person_name()"

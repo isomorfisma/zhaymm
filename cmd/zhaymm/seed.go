@@ -8,6 +8,7 @@ import (
 	"github.com/isomorfisma/zhaymm/internal/config" 
 	"github.com/isomorfisma/zhaymm/internal/database"
 	"github.com/isomorfisma/zhaymm/internal/dag"
+	"github.com/isomorfisma/zhaymm/internal/engine"
 	"github.com/joho/godotenv" 
 	"github.com/spf13/cobra"
 )
@@ -40,6 +41,26 @@ var seedCmd = &cobra.Command{
 		}
 
 		fmt.Printf("-> Safe execution order (from left to right): %v\n", executionOrder)
+
+		fmt.Println("Testing data factory (generating 1 row of data)...")
+		firstTable := executionOrder[0]
+		var targetCols map[string]string
+		for _, t := range cfg.Tables{
+			if t.Name == firstTable {
+				targetCols = t.Columns
+				break
+			}
+		}
+
+		dummyRow, err := engine.GenerateRow(targetCols)
+		if err != nil {
+			log.Fatalf("Failed to generate data: %v", err)
+		}
+
+		fmt.Printf("Data generated successfully for table '%s':\n", firstTable)
+		for col, val := range dummyRow {
+			fmt.Printf("	- %s %v\n",col, val)
+		}
 
 		fmt.Printf("-> Found %d table.\n", len(cfg.Tables))
 		fmt.Println("Trying to connect to database...")
