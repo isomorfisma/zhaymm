@@ -3,8 +3,11 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/isomorfisma/zhaymm/internal/config" 
+	"github.com/isomorfisma/zhaymm/internal/database"
+	"github.com/joho/godotenv" 
 	"github.com/spf13/cobra"
 )
 
@@ -21,16 +24,31 @@ var seedCmd = &cobra.Command{
 			log.Fatalf("Fatal error: %v", err)
 		}
 
-		// Proof that Golang successfully read and understands YAML.
-		fmt.Printf("Config read successfully! Found %d tables to process.\n", len(cfg.Tables))
-		for _, t := range cfg.Tables {
-			fmt.Printf("-> Preparing data for table '%s' with sum of %d rows.\n", t.Name, t.Count)
+		fmt.Printf("-> Found %d table.\n", len(cfg.Tables))
+		fmt.Println("Trying to connect to database...")
+
+		dsn := os.Getenv("DATABASE_URL")
+		if dsn == "" {
+			log.Fatal("Error: DATABASE_URL not set")
 		}
+		var dbAdapter database.Adapter = &database.PostgresAdapter{}
+
+		err = dbAdapter.Connect(dsn)
+		if err!= nil {
+			log.Fatalf("Failed to connect to database. %v\nMake sure Postgres is running!", err)
+		}
+		defer dbAdapter.Close()
+		fmt.Println("-> Successfully connected to database.")
 	},
+
 }
 
 // Automatically runs before main()
 func init() {
 	// Attach seed subcommand to root
 	rootCmd.AddCommand(seedCmd)
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("Info: File .env tidak ditemukan, menggunakan environment OS bawaan.")
+	}
 }
