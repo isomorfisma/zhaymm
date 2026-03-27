@@ -1,8 +1,14 @@
 tables:
+  - name: orders
+    count: 50
+    depends_on: ["users"] 
+    columns:
+      id: "uuid"
+      user_id: "uuid" 
+      total: "random_int"
   - name: users
     count: 100
+    depends_on: [] 
     columns:
       id: "uuid"
       name: "person_name"
-      email: "email"
-  

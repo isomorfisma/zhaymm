@@ -7,6 +7,7 @@ import (
 
 	"github.com/isomorfisma/zhaymm/internal/config" 
 	"github.com/isomorfisma/zhaymm/internal/database"
+	"github.com/isomorfisma/zhaymm/internal/dag"
 	"github.com/joho/godotenv" 
 	"github.com/spf13/cobra"
 )
@@ -23,6 +24,22 @@ var seedCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("Fatal error: %v", err)
 		}
+
+		fmt.Println("Analyzing table relations...")
+		graph := dag.NewGraph()
+
+		// Inserts all table to the graph
+		for _, t := range cfg.Tables {
+			graph.AddNode(t.Name, t.DependsOn)
+		}
+
+		// Run the sorting algorithm
+		executionOrder, err := graph.Sort()
+		if err != nil {
+			log.Fatalf("DAG Error: %v", err)
+		}
+
+		fmt.Printf("-> Safe execution order (from left to right): %v\n", executionOrder)
 
 		fmt.Printf("-> Found %d table.\n", len(cfg.Tables))
 		fmt.Println("Trying to connect to database...")
