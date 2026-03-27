@@ -3,12 +3,17 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/isomorfisma/zhaymm/internal/config" 
+	"github.com/isomorfisma/zhaymm/internal/database"
+	"github.com/isomorfisma/zhaymm/internal/dag"
+	"github.com/isomorfisma/zhaymm/internal/pipeline"
+	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 )
 
-// seedCmd is for the CLI 'seed command'
+// seedCmd is for the CLI 'seed command
 var seedCmd = &cobra.Command{
 	Use:   "seed",
 	Short: "Starting seeding process to database",
@@ -21,16 +26,68 @@ var seedCmd = &cobra.Command{
 			log.Fatalf("Fatal error: %v", err)
 		}
 
-		// Proof that Golang successfully read and understands YAML.
-		fmt.Printf("Config read successfully! Found %d tables to process.\n", len(cfg.Tables))
+		fmt.Println("Analyzing table relations...")
+		graph := dag.NewGraph()
+
+		// Inserts all table to the graph
 		for _, t := range cfg.Tables {
-			fmt.Printf("-> Preparing data for table '%s' with sum of %d rows.\n", t.Name, t.Count)
+			graph.AddNode(t.Name, t.DependsOn)
 		}
+
+		// Run the sorting algorithm
+		executionOrder, err := graph.Sort()
+		if err != nil {
+			log.Fatalf("DAG Error: %v", err)
+		}
+
+		fmt.Printf("-> Safe execution order (from left to right): %v\n", executionOrder)
+
+		fmt.Printf("-> Found %d table.\n", len(cfg.Tables))
+		fmt.Println("Trying to connect to database...")
+
+		dsn := os.Getenv("DATABASE_URL")
+		if dsn == "" {
+			log.Fatal("Error: DATABASE_URL not set")
+		}
+		var dbAdapter database.Adapter = &database.PostgresAdapter{}
+
+		err = dbAdapter.Connect(dsn)
+		if err!= nil {
+			log.Fatalf("Failed to connect to database. %v\nMake sure Postgres is running!", err)
+		}
+		defer dbAdapter.Close()
+		fmt.Println("-> Successfully connected to database.")
+
+		fmt.Println("3. Memulai proses Seeding Data...")
+		
+		for _, tableName := range executionOrder {
+			
+			var targetTable *config.Table
+			for _, t := range cfg.Tables {
+				if t.Name == tableName {
+					targetTable = &t
+					break
+				}
+			}
+
+			
+			err := pipeline.RunSeeder(dbAdapter, targetTable.Name, targetTable.Columns, targetTable.Count)
+			if err != nil {
+				log.Fatalf("\nKesalahan saat seeding tabel %s: %v", targetTable.Name, err)
+			}
+		}
+
+		fmt.Println("🎉 SELURUH PROSES SEEDING SELESAI DENGAN SUKSES! 🎉")
 	},
+
 }
 
 // Automatically runs before main()
 func init() {
 	// Attach seed subcommand to root
 	rootCmd.AddCommand(seedCmd)
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("Info: File .env tidak ditemukan, menggunakan environment OS bawaan.")
+	}
 }

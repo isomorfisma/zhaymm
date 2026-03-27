@@ -7,8 +7,8 @@ type Config struct {
 
 // Table represent configuration for 1 specific table
 type Table struct {
-	Name    string            `yaml:"name"`
-	Count   int               `yaml:"count"`
-	Columns map[string]string `yaml:"columns"`
+	Name      string            `yaml:"name"`
+	Count     int               `yaml:"count"`
+	DependsOn []string          `yaml:"depends_on"` 
+	Columns   map[string]string `yaml:"columns"`
 }
-
