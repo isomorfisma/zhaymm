@@ -7,5 +7,6 @@ type Adapter interface {
 	Connect(dsn string) error
 	Close() error
 	Ping() error
-	GetDB() *sql.DB 
+	GetDB() *sql.DB
+	BulkInsert(tableName string, columns []string, chunk [][]any) error 
 }

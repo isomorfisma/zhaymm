@@ -4,8 +4,8 @@ tables:
     depends_on: ["users"]
     columns:
       id: "uuid()"
-      user_id: "uuid()" 
-      total: "random_int(10000, 500000)" # Menghasilkan angka acak antara 10rb - 500rb
+      user_id: "random_ref('users')" # UBAH BARIS INI!
+      total: "random_int(10000, 500000)"
   - name: users
     count: 100
     depends_on: []
