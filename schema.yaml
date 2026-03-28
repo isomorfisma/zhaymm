@@ -1,39 +1,23 @@
+# ==========================================
+# Database Seeder Configuration
+# ==========================================
+# Documentation: https://github.com/isomorfisma/zhaymm
+
 tables:
-  - name: order_items
-    count: 100000
-    depends_on: ["orders", "products"]
-    columns:
-      id: "uuid()"
-      order_id: "random_ref('orders')"
-      product_id: "random_ref('products')"
-      qty: "random_int(1, 5)"
-  - name: orders
-    count: 20000
-    depends_on: ["users"]
-    columns:
-      id: "uuid()"
-      buyer_id: "random_ref('users')"
-      status: "word()"
-  - name: products
-    count: 50000
-    depends_on: ["stores"]
-    columns:
-      id: "uuid()"
-      store_id: "random_ref('stores')"
-      product_name: "word()"
-      price: "random_int(10000, 10000000)"
-  - name: stores
-    count: 2000
-    depends_on: ["users"]
-    columns:
-      id: "uuid()"
-      owner_id: "random_ref('users')"
-      store_name: "company()"
+  # Example 1: An independent table
   - name: users
-    count: 10000
+    count: 10
     depends_on: []
     columns:
       id: "uuid()"
       name: "person_name()"
       email: "email()"
-      phone: "phone()"
+      
+  # Example 2: A dependent table with Foreign Key (Uncomment to use)
+  # - name: orders
+  #   count: 50
+  #   depends_on: ["users"]
+  #   columns:
+  #     id: "uuid()"
+  #     user_id: "random_ref('users')"
+  #     total: "random_int(10000, 500000)"
