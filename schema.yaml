@@ -4,14 +4,16 @@
 # Documentation: https://github.com/isomorfisma/zhaymm
 
 tables:
-  # Example 1: An independent table
   - name: users
-    count: 10
+    count: 5
     depends_on: []
     columns:
       id: "uuid()"
       name: "person_name()"
-      email: "email()"
+      ip_address: "ipv4()"
+      credit_card: "credit_card()"
+      city: "city()"
+      created_at: "date()"
       
   # Example 2: A dependent table with Foreign Key (Uncomment to use)
   # - name: orders
