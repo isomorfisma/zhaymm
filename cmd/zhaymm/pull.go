@@ -3,54 +3,53 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/isomorfisma/zhaymm/internal/config"
 	"github.com/isomorfisma/zhaymm/internal/dag"
 	"github.com/isomorfisma/zhaymm/internal/database"
 	"github.com/isomorfisma/zhaymm/internal/pipeline"
-	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 )
 
 var pullCmd = &cobra.Command{
 	Use:   "pull",
-	Short: "Pulls data from the source, censors, pushes to the local target",
+	Short: "Extract data from source, anonymize, and load into target database",
 	Run: func(cmd *cobra.Command, args []string) {
-		godotenv.Load()
+		configPath, _ := cmd.Flags().GetString("config")
+		sourceURL, _ := cmd.Flags().GetString("source-db")
+		targetURL, _ := cmd.Flags().GetString("target-db")
 
-		fmt.Println("Reading censor config from schema.yaml...")
-		cfg, err := config.LoadConfig("schema.yaml")
+		fmt.Printf("[1/4] Reading masking rules from %s...\n", configPath)
+		cfg, err := config.LoadConfig(configPath)
 		if err != nil {
-			log.Fatalf("Config error: %v", err)
+			log.Fatalf("Fatal config error: %v", err)
 		}
 
+		fmt.Println("[2/4] Analyzing table relations (DAG)...")
 		graph := dag.NewGraph()
 		for _, t := range cfg.Tables {
 			graph.AddNode(t.Name, t.DependsOn)
 		}
 		executionOrder, err := graph.Sort()
 		if err != nil {
-			log.Fatalf("DAG error: %v", err)
+			log.Fatalf("DAG Error: %v", err)
 		}
 
-		fmt.Println("Opening connection to source DB and target DB...")
-		sourceDSN := os.Getenv("SOURCE_DATABASE_URL")
-		targetDSN := os.Getenv("DATABASE_URL")
-
+		fmt.Println("[3/4] Connecting to Source and Target databases...")
 		var sourceDB database.Adapter = &database.PostgresAdapter{}
-		if err := sourceDB.Connect(sourceDSN); err != nil {
-			log.Fatalf("Source DB failed to connect: %v", err)
+		if err := sourceDB.Connect(sourceURL); err != nil {
+			log.Fatalf("Source DB connection failed: %v", err)
 		}
 		defer sourceDB.Close()
 
 		var targetDB database.Adapter = &database.PostgresAdapter{}
-		if err := targetDB.Connect(targetDSN); err != nil {
-			log.Fatalf("Target DB failed to connect: %v", err)
+		if err := targetDB.Connect(targetURL); err != nil {
+			log.Fatalf("Target DB connection failed: %v", err)
 		}
 		defer targetDB.Close()
+		fmt.Println("      -> Connections established.")
 
-		fmt.Println("Starting the process...")
+		fmt.Println("[4/4] Starting pull and anonymization pipeline...")
 		for _, tableName := range executionOrder {
 			var maskRules map[string]string
 			var limit int
@@ -65,15 +64,22 @@ var pullCmd = &cobra.Command{
 
 			err := pipeline.RunPuller(sourceDB, targetDB, tableName, maskRules, limit)
 			if err != nil {
-				log.Fatalf("\nError pull at table %s: %v", tableName, err)
+				log.Fatalf("\nError pulling table %s: %v", tableName, err)
 			}
 			fmt.Println()
 		}
 
-		fmt.Println("Done!")
+		fmt.Println("Pull & anonymize completed!")
 	},
 }
 
 func init() {
+	pullCmd.Flags().StringP("config", "c", "schema.yaml", "Path to the YAML schema file")
+	pullCmd.Flags().StringP("source-db", "s", "", "Source database connection string (DSN)")
+	pullCmd.Flags().StringP("target-db", "t", "", "Target database connection string (DSN)")
+	
+	pullCmd.MarkFlagRequired("source-db")
+	pullCmd.MarkFlagRequired("target-db")
+
 	rootCmd.AddCommand(pullCmd)
 }

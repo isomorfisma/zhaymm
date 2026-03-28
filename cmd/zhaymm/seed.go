@@ -3,65 +3,54 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 
-	"github.com/isomorfisma/zhaymm/internal/config" 
-	"github.com/isomorfisma/zhaymm/internal/database"
+	"github.com/isomorfisma/zhaymm/internal/config"
 	"github.com/isomorfisma/zhaymm/internal/dag"
+	"github.com/isomorfisma/zhaymm/internal/database"
 	"github.com/isomorfisma/zhaymm/internal/pipeline"
-	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 )
 
-// seedCmd is for the CLI 'seed command
 var seedCmd = &cobra.Command{
 	Use:   "seed",
-	Short: "Starting seeding process to database",
+	Short: "Start seeding mock data into the database",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Reading schema.yaml configuration...")
-		
-		// Calls LoadConfig function inside parser.go
-		cfg, err := config.LoadConfig("schema.yaml")
+		// Get values from CLI flags
+		configPath, _ := cmd.Flags().GetString("config")
+		dbURL, _ := cmd.Flags().GetString("db")
+
+		// Load YAML Configuration
+		fmt.Printf("[1/4] Reading configuration from %s...\n", configPath)
+		cfg, err := config.LoadConfig(configPath)
 		if err != nil {
-			log.Fatalf("Fatal error: %v", err)
+			log.Fatalf("Fatal config error: %v", err)
 		}
 
-		fmt.Println("Analyzing table relations...")
+		// Analyze DAG (Directed Acyclic Graph)
+		fmt.Println("[2/4] Analyzing table relations (DAG)...")
 		graph := dag.NewGraph()
-
-		// Inserts all table to the graph
 		for _, t := range cfg.Tables {
 			graph.AddNode(t.Name, t.DependsOn)
 		}
-
-		// Run the sorting algorithm
 		executionOrder, err := graph.Sort()
 		if err != nil {
 			log.Fatalf("DAG Error: %v", err)
 		}
+		fmt.Printf("      -> Safe execution order: %v\n", executionOrder)
 
-		fmt.Printf("-> Safe execution order (from left to right): %v\n", executionOrder)
-
-		fmt.Printf("-> Found %d table.\n", len(cfg.Tables))
-		fmt.Println("Trying to connect to database...")
-
-		dsn := os.Getenv("DATABASE_URL")
-		if dsn == "" {
-			log.Fatal("Error: DATABASE_URL not set")
-		}
+		// Connect to Database
+		fmt.Println("[3/4] Connecting to target database...")
 		var dbAdapter database.Adapter = &database.PostgresAdapter{}
-
-		err = dbAdapter.Connect(dsn)
-		if err!= nil {
-			log.Fatalf("Failed to connect to database. %v\nMake sure Postgres is running!", err)
+		err = dbAdapter.Connect(dbURL)
+		if err != nil {
+			log.Fatalf("Database connection failed: %v", err)
 		}
 		defer dbAdapter.Close()
-		fmt.Println("-> Successfully connected to database.")
+		fmt.Println("      -> Connection established.")
 
-		fmt.Println("Seeding data in progress..")
-		
+		// Execute Pipeline
+		fmt.Println("[4/4] Starting data seeding pipeline...")
 		for _, tableName := range executionOrder {
-			
 			var targetTable *config.Table
 			for _, t := range cfg.Tables {
 				if t.Name == tableName {
@@ -70,24 +59,25 @@ var seedCmd = &cobra.Command{
 				}
 			}
 
-			
 			err := pipeline.RunSeeder(dbAdapter, targetTable.Name, targetTable.Columns, targetTable.Count)
 			if err != nil {
-				log.Fatalf("\nError at seeding table%s: %v", targetTable.Name, err)
+				log.Fatalf("\nError seeding table %s: %v", targetTable.Name, err)
 			}
+			fmt.Println() 
 		}
 
-		fmt.Println("Seeding all done!")
+		fmt.Println("All tables seeded successfully.")
 	},
-
 }
 
-// Automatically runs before main()
 func init() {
-	// Attach seed subcommand to root
+	// Define flags for the 'seed' command
+	// StringP takes: name, shorthand, default value, description
+	seedCmd.Flags().StringP("config", "c", "schema.yaml", "Path to the YAML schema file")
+	seedCmd.Flags().StringP("db", "d", "", "Target database connection string (DSN)")
+	
+	// Mark 'db' as a required flag. The CLI will reject the command if it's missing.
+	seedCmd.MarkFlagRequired("db")
+
 	rootCmd.AddCommand(seedCmd)
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("Info: File .env tidak ditemukan, menggunakan environment OS bawaan.")
-	}
 }
