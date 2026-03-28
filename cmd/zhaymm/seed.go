@@ -58,7 +58,7 @@ var seedCmd = &cobra.Command{
 		defer dbAdapter.Close()
 		fmt.Println("-> Successfully connected to database.")
 
-		fmt.Println("3. Memulai proses Seeding Data...")
+		fmt.Println("Seeding data in progress..")
 		
 		for _, tableName := range executionOrder {
 			
@@ -73,11 +73,11 @@ var seedCmd = &cobra.Command{
 			
 			err := pipeline.RunSeeder(dbAdapter, targetTable.Name, targetTable.Columns, targetTable.Count)
 			if err != nil {
-				log.Fatalf("\nKesalahan saat seeding tabel %s: %v", targetTable.Name, err)
+				log.Fatalf("\nError at seeding table%s: %v", targetTable.Name, err)
 			}
 		}
 
-		fmt.Println("🎉 SELURUH PROSES SEEDING SELESAI DENGAN SUKSES! 🎉")
+		fmt.Println("Seeding all done!")
 	},
 
 }

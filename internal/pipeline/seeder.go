@@ -8,7 +8,7 @@ import (
 	"github.com/isomorfisma/zhaymm/internal/engine"
 )
 
-const ChunkSize = 1000 
+const ChunkSize = 5000 
 
 func RunSeeder(db database.Adapter, tableName string, columns map[string]string, totalRows int) error {
 	var colNames []string

@@ -2,8 +2,8 @@ package engine
 
 import (
 	"fmt"
-	"math/rand" // Tambahkan import ini
-	"time"      // Tambahkan import ini
+	"math/rand" 
+	"time"     
 
 	"github.com/expr-lang/expr"
 	"github.com/brianvoe/gofakeit/v6"
@@ -21,16 +21,19 @@ func GenerateRow(columns map[string]string) (map[string]any, error) {
 	env := map[string]interface{}{
 		"uuid":        gofakeit.UUID,
 		"person_name": gofakeit.Name,
+		"email":       gofakeit.Email,   
+		"phone":       gofakeit.Phone,  
+		"company":     gofakeit.Company,	
+		"word":        gofakeit.Word,    
 		"random_int": func(min, max int) int {
 			return gofakeit.Number(min, max)
 		},
 		"random_ref": func(tableName string) any {
 			ids := PKStore[tableName]
 			if len(ids) == 0 {
-				return "" 
+				return ""
 			}
-			randomIndex := rand.Intn(len(ids))
-			return ids[randomIndex]
+			return ids[rand.Intn(len(ids))]
 		},
 	}
 
