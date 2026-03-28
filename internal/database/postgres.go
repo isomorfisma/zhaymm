@@ -81,3 +81,13 @@ func (p *PostgresAdapter) BulkInsert(tableName string, columns []string, chunk [
 
 	return nil
 }
+
+
+func (p *PostgresAdapter) FetchData(tableName string, limit int) (*sql.Rows, error) {
+	query := fmt.Sprintf("SELECT * FROM %s", tableName)
+	if limit > 0 {
+		query += fmt.Sprintf(" LIMIT %d", limit) 
+	}
+	
+	return p.db.Query(query)
+}

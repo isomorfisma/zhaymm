@@ -8,7 +8,7 @@ import (
 	"github.com/isomorfisma/zhaymm/internal/engine"
 )
 
-const ChunkSize = 1000 
+const ChunkSize = 5000 
 
 func RunSeeder(db database.Adapter, tableName string, columns map[string]string, totalRows int) error {
 	var colNames []string
@@ -23,7 +23,7 @@ func RunSeeder(db database.Adapter, tableName string, columns map[string]string,
 		rowMap, err := engine.GenerateRow(columns)
 
 		if err != nil {
-			return fmt.Errorf("gagal generate row ke-%d: %w", i, err)
+			return fmt.Errorf("Failed to generate row-%d: %w", i, err)
 		}
 		if idVal, exists := rowMap["id"]; exists {
 			engine.PKStore[tableName] = append(engine.PKStore[tableName], idVal)
@@ -42,12 +42,12 @@ func RunSeeder(db database.Adapter, tableName string, columns map[string]string,
 				return err
 			}
 			insertedCount += len(chunk)
-			fmt.Printf("\r-> %s: %d / %d baris berhasil di-seed...", tableName, insertedCount, totalRows)
+			fmt.Printf("\r-> %s: %d / %d rows seeded successfully...", tableName, insertedCount, totalRows)
 			
 			chunk = chunk[:0] 
 		}
 	}
 
-	fmt.Println(" Selesai!")
+	fmt.Println("Done!")
 	return nil
 }

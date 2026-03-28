@@ -1,14 +1,25 @@
+# ==========================================
+# Database Seeder Configuration
+# ==========================================
+# Documentation: https://github.com/isomorfisma/zhaymm
+
 tables:
-  - name: orders
-    count: 50
-    depends_on: ["users"]
-    columns:
-      id: "uuid()"
-      user_id: "random_ref('users')" # UBAH BARIS INI!
-      total: "random_int(10000, 500000)"
   - name: users
-    count: 100
+    count: 5
     depends_on: []
     columns:
       id: "uuid()"
       name: "person_name()"
+      ip_address: "ipv4()"
+      credit_card: "credit_card()"
+      city: "city()"
+      created_at: "date()"
+      
+  # Example 2: A dependent table with Foreign Key (Uncomment to use)
+  # - name: orders
+  #   count: 50
+  #   depends_on: ["users"]
+  #   columns:
+  #     id: "uuid()"
+  #     user_id: "random_ref('users')"
+  #     total: "random_int(10000, 500000)"

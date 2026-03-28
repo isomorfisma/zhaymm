@@ -9,4 +9,5 @@ type Adapter interface {
 	Ping() error
 	GetDB() *sql.DB
 	BulkInsert(tableName string, columns []string, chunk [][]any) error 
+	FetchData(tableName string, limit int) (*sql.Rows, error)
 }
